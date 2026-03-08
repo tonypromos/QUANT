@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  operator_admin_nz
+  analyst_readonly
+}
+
+enum BotMode {
+  minutes_to_hours
+  hours_to_days
+}
+
+enum OrderSide {
+  yes
+  no
+}
+
+enum OrderStatus {
+  pending
+  open
+  partially_filled
+  filled
+  canceled
+  rejected
+}
+
+enum RiskEventType {
+  daily_loss_stop
+  stale_data_halt
+  volatility_halt
+  manual_kill_switch
+  auto_kill_switch
+  preflight_fail
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  role       UserRole
+  username   String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+}
+
+model Settings {
+  id                          String   @id @default("singleton")
+  emailAlertsEnabled          Boolean  @default(true)
+  paperAutotradeEnabled       Boolean  @default(true)
+  riskLimitsConfigured        Boolean  @default(true)
+  modeDefault                 BotMode  @default(hours_to_days)
+  minLiquidityUsd             Decimal  @db.Decimal(18, 6) @default(50000)
+  maxSpread                   Decimal  @db.Decimal(18, 6) @default(0.03)
+  edgeThreshold               Decimal  @db.Decimal(18, 6) @default(0.03)
+  minConfidence               Decimal  @db.Decimal(18, 6) @default(0.65)
+  maxExposurePerMarketPct     Decimal  @db.Decimal(18, 6) @default(0.02)
+  maxExposurePerTagPct        Decimal  @db.Decimal(18, 6) @default(0.06)
+  maxTotalExposurePct         Decimal  @db.Decimal(18, 6) @default(0.20)
+  dailyLossStopPct            Decimal  @db.Decimal(18, 6) @default(0.02)
+  maxNewPositionsPerDay       Int      @default(25)
+  orderTtlSecMin              Int      @default(30)
+  orderTtlSecMax              Int      @default(120)
+  bankrollUsd                 Decimal  @db.Decimal(18, 6) @default(300)
+  whitelistTags               String[] @default(["politics", "macro", "sports"])
+  updatedAt                   DateTime @updatedAt
+}
+
+model BotState {
+  id                String   @id @default("singleton")
+  liveEnabled       Boolean  @default(false)
+  mode              BotMode  @default(hours_to_days)
+  killSwitchActive  Boolean  @default(false)
+  haltedReason      String?
+  lastPreflightAt   DateTime?
+  lastDecisionAt    DateTime?
+  lastOrderAt       DateTime?
+  updatedAt         DateTime @updatedAt
+}
+
+model WorkerHeartbeat {
+  id          String   @id @default(cuid())
+  source      String
+  lastSeenAt  DateTime @default(now())
+  detailsJson Json?
+
+  @@unique([source])
+}
+
+model MarketSnapshot {
+  id              String   @id @default(cuid())
+  marketId        String
+  title           String
+  tag             String
+  liquidityUsd    Decimal  @db.Decimal(18, 6)
+  spread          Decimal  @db.Decimal(18, 6)
+  impliedProbYes  Decimal  @db.Decimal(18, 6)
+  bestBidYes      Decimal  @db.Decimal(18, 6)
+  bestAskYes      Decimal  @db.Decimal(18, 6)
+  volume5m        Decimal  @db.Decimal(18, 6)
+  orderImbalance  Decimal  @db.Decimal(18, 6)
+  updatedAt       DateTime @default(now())
+
+  @@index([marketId, updatedAt])
+}
+
+model SignalScore {
+  id                String   @id @default(cuid())
+  marketId          String
+  impliedProbYes    Decimal  @db.Decimal(18, 6)
+  posteriorProbYes  Decimal  @db.Decimal(18, 6)
+  edge              Decimal  @db.Decimal(18, 6)
+  confidence        Decimal  @db.Decimal(18, 6)
+  score             Decimal  @db.Decimal(18, 6)
+  featureJson       Json
+  modelVersion      String
+  createdAt         DateTime @default(now())
+
+  @@index([marketId, createdAt])
+  @@index([createdAt])
+}
+
+model Opportunity {
+  id               String   @id @default(cuid())
+  marketId         String
+  marketTitle      String
+  tag              String
+  action           String
+  liquidityUsd     Decimal  @db.Decimal(18, 6)
+  spread           Decimal  @db.Decimal(18, 6)
+  impliedProbYes   Decimal  @db.Decimal(18, 6)
+  posteriorProbYes Decimal  @db.Decimal(18, 6)
+  edge             Decimal  @db.Decimal(18, 6)
+  confidence       Decimal  @db.Decimal(18, 6)
+  score            Decimal  @db.Decimal(18, 6)
+  stale            Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([marketId, createdAt])
+}
+
+model LiveOrder {
+  id             String      @id @default(cuid())
+  marketId       String
+  marketTitle    String
+  tag            String
+  side           OrderSide
+  quantityUsd    Decimal     @db.Decimal(18, 6)
+  limitPrice     Decimal     @db.Decimal(18, 6)
+  ttlSec         Int
+  status         OrderStatus @default(pending)
+  reason         String
+  mode           BotMode
+  externalRef    String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  fills          LiveFill[]
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+model LiveFill {
+  id           String   @id @default(cuid())
+  liveOrderId  String
+  fillPrice    Decimal  @db.Decimal(18, 6)
+  quantityUsd  Decimal  @db.Decimal(18, 6)
+  feeUsd       Decimal  @db.Decimal(18, 6) @default(0)
+  createdAt    DateTime @default(now())
+
+  order        LiveOrder @relation(fields: [liveOrderId], references: [id], onDelete: Cascade)
+}
+
+model LivePosition {
+  id               String   @id @default(cuid())
+  marketId         String
+  marketTitle      String
+  tag              String
+  side             OrderSide
+  netQuantityUsd   Decimal  @db.Decimal(18, 6)
+  avgPrice         Decimal  @db.Decimal(18, 6)
+  markPrice        Decimal  @db.Decimal(18, 6)
+  unrealizedPnlUsd Decimal  @db.Decimal(18, 6)
+  realizedPnlUsd   Decimal  @db.Decimal(18, 6) @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@unique([marketId, side])
+}
+
+model PaperOrder {
+  id             String      @id @default(cuid())
+  marketId       String
+  marketTitle    String
+  tag            String
+  side           OrderSide
+  quantityUsd    Decimal     @db.Decimal(18, 6)
+  fillPrice      Decimal     @db.Decimal(18, 6)
+  impliedProbYes Decimal     @db.Decimal(18, 6)
+  reason         String
+  mode           BotMode
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  fills          PaperFill[]
+
+  @@index([createdAt])
+}
+
+model PaperFill {
+  id            String   @id @default(cuid())
+  paperOrderId  String
+  fillPrice     Decimal  @db.Decimal(18, 6)
+  quantityUsd   Decimal  @db.Decimal(18, 6)
+  feeUsd        Decimal  @db.Decimal(18, 6) @default(0)
+  createdAt     DateTime @default(now())
+
+  order         PaperOrder @relation(fields: [paperOrderId], references: [id], onDelete: Cascade)
+}
+
+model PaperPosition {
+  id               String   @id @default(cuid())
+  marketId         String
+  marketTitle      String
+  tag              String
+  side             OrderSide
+  netQuantityUsd   Decimal  @db.Decimal(18, 6)
+  avgPrice         Decimal  @db.Decimal(18, 6)
+  markPrice        Decimal  @db.Decimal(18, 6)
+  unrealizedPnlUsd Decimal  @db.Decimal(18, 6)
+  realizedPnlUsd   Decimal  @db.Decimal(18, 6) @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@unique([marketId, side])
+}
+
+model RiskEvent {
+  id         String        @id @default(cuid())
+  type       RiskEventType
+  reason     String
+  detailsJson Json?
+  createdAt  DateTime      @default(now())
+
+  @@index([createdAt])
+}
+
+model ModelVersion {
+  id                String   @id @default(cuid())
+  version           String   @unique
+  trainedOnFrom     DateTime
+  trainedOnTo       DateTime
+  calibrationEce    Decimal  @db.Decimal(18, 6)
+  brierScore        Decimal  @db.Decimal(18, 6)
+  metadataJson      Json?
+  createdAt         DateTime @default(now())
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  actorRole   UserRole?
+  actorId     String?
+  action      String
+  targetType  String
+  targetId    String?
+  detailsJson Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action, createdAt])
+}

@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 222 42% 7%;
+  --panel: 225 32% 12%;
+  --ink: 210 24% 92%;
+  --accent: 185 89% 54%;
+  --danger: 0 82% 60%;
+  --success: 142 75% 45%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: hsl(var(--ink));
+  background:
+    radial-gradient(900px 500px at 0% -10%, rgb(54 116 228 / 16%), transparent 55%),
+    radial-gradient(600px 340px at 100% 0%, rgb(47 225 200 / 12%), transparent 50%),
+    linear-gradient(180deg, rgb(8 12 24), rgb(4 8 15));
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.panel-glass {
+  background: linear-gradient(160deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 2%));
+  border: 1px solid rgb(255 255 255 / 12%);
+  backdrop-filter: blur(12px);
+}
+
+.metric-value {
+  font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide {
+  animation: fadeSlide 320ms ease-out both;
+}

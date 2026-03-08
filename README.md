@@ -89,6 +89,8 @@ npm run build
 - [src/lib](/Users/tonylaughton/AI-Coding/QUANT/src/lib): auth, services, execution logic, feed client, risk controls
 - [worker/src/index.ts](/Users/tonylaughton/AI-Coding/QUANT/worker/src/index.ts): background worker loop
 - [prisma/schema.prisma](/Users/tonylaughton/AI-Coding/QUANT/prisma/schema.prisma): data model
+- [docs/ORIGIN.md](/Users/tonylaughton/AI-Coding/QUANT/docs/ORIGIN.md): project origin and reconstructed original brief
+- [docs/SIGNAL_MODEL.md](/Users/tonylaughton/AI-Coding/QUANT/docs/SIGNAL_MODEL.md): current scoring logic and its limitations
 - [docs/HANDOVER.md](/Users/tonylaughton/AI-Coding/QUANT/docs/HANDOVER.md): architecture and current limitations
 - [docs/RUNBOOK.md](/Users/tonylaughton/AI-Coding/QUANT/docs/RUNBOOK.md): operational notes and troubleshooting
 

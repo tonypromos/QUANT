@@ -1,82 +1,34 @@
-# Quant Polymarket NZ Operator Console
+# QUANT
 
-Compliance-safe autonomous trading app scaffold built with Next.js + TypeScript + Prisma.
+Experimental Polymarket operator console built with Next.js, TypeScript, Prisma, and a background worker.
 
-## Handover docs
+This repo is being left open for other people to explore and extend. It is usable as a local scaffold for paper-trading experiments, but it should not be treated as a production-ready trading system.
 
-- `docs/HANDOVER.md` - architecture, current state, known limits, next steps
-- `docs/RUNBOOK.md` - startup, operations, troubleshooting, env checklist
+## Project status
 
-## What is implemented
+- Low-maintenance personal project
+- Open to forks, experiments, and community improvements
+- Best suited for local development and paper-trading workflows
+- Live trading paths exist, but they still need independent review before any real-money use
 
-- Role model:
-  - `operator_admin_nz`: can control live bot and settings.
-  - `analyst_readonly`: read-only analytics and monitoring.
-- Session auth with HTTP-only cookie.
-- API endpoints:
-  - `POST /api/auth/login`
-  - `POST /api/auth/logout`
-  - `POST /api/bot/live/enable`
-  - `POST /api/bot/live/disable`
-  - `POST /api/bot/kill-switch`
-  - `POST /api/bot/mode`
-  - `GET /api/bot/status`
-  - `GET /api/opportunities`
-  - `GET /api/markets/:id`
-  - `GET /api/portfolio`
-  - `GET /api/risk`
-  - `GET /api/orders`
-  - `GET /api/settings`
-  - `POST /api/settings`
-- `POST /api/alerts/email-toggle`
-- `GET /api/paper/orders`
-- `GET /api/paper/portfolio`
-- Preflight checks before enabling live mode:
-  - wallet key reference exists
-  - risk limits configured
-  - worker heartbeat healthy
-  - market data fresh
-  - kill switch not active
-- Immutable audit event insertions for critical actions.
-- Autonomous worker loop (mock feed by default) with:
-  - 1-5s ingestion cadence
-  - signal generation
-  - opportunity ranking persistence
-  - autonomous paper-trade simulation loop when live mode is disabled
-  - low-frequency autonomous live order intent creation
-  - daily loss stop and risk halt behavior
-- Fancy `shadcn`-style UI:
-  - opportunities dashboard
-  - market deep dive (`/markets/[id]`)
-  - portfolio/risk page (`/portfolio`)
-  - settings/model controls (`/settings`)
+## What it includes
 
-## NZ operator login
+- Next.js dashboard for opportunities, portfolio, risk, trades, and settings
+- Cookie-based role login for operator and analyst views
+- Prisma-backed persistence layer
+- Background worker for market ingestion, signal scoring, and autonomous execution loops
+- Paper-trading flow for testing strategy behavior without live execution
+- Kill switch and preflight checks around live mode
 
-The app uses env-based credentials:
+## Quick start
 
-- `OPERATOR_USERNAME`
-- `OPERATOR_PASSWORD`
-- `ANALYST_USERNAME`
-- `ANALYST_PASSWORD`
-
-Login UI: `/login`
-
-## Local setup
-
-1. Copy env file:
+1. Copy the sample environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Set strong credentials and secrets in `.env`.
-   - Include Polymarket credentials:
-     - `POLYMARKET_API_KEY`
-     - `POLYMARKET_API_SECRET`
-     - `POLYMARKET_API_PASSPHRASE`
-     - `POLYMARKET_PROFILE_KEY`
-   - Set `POLYMARKET_FEED_MODE=real` to use live market-data ingestion.
+2. Update `.env` with your own credentials and secrets.
 
 3. Install dependencies:
 
@@ -84,44 +36,76 @@ cp .env.example .env
 npm install
 ```
 
-4. Generate Prisma client and migrate:
+4. Prepare the database:
 
 ```bash
 npm run prisma:generate
 npm run prisma:migrate
-```
-
-5. Seed singleton records:
-
-```bash
 npm run seed
 ```
 
-6. Run app and worker (separate terminals):
+5. Start the app and worker in separate terminals:
 
 ```bash
 npm run dev
 npm run worker:dev
 ```
 
-## Signed kill-switch API
+6. Open `http://localhost:3000/login` and sign in with the credentials you set in `.env`.
 
-`POST /api/bot/kill-switch` accepts either:
+## Default local workflow
 
-- operator session cookie, or
-- signed headers:
-  - `x-kill-timestamp`
-  - `x-kill-signature`
+If you just want to explore the project safely:
 
-Signature algorithm:
+- keep `POLYMARKET_FEED_MODE=mock` while getting familiar with the codebase
+- leave live mode disabled
+- use the paper-trading flow first
 
-- payload string: `${timestamp}.${raw_json_body}`
-- digest: `HMAC-SHA256` with `KILL_SWITCH_SHARED_SECRET`
+If you want real market data, switch `POLYMARKET_FEED_MODE=real` and provide the relevant Polymarket credentials in `.env`.
 
-## Production notes
+## Environment variables
 
-- Put Vercel project, database project, and worker runtime under NZ operator-controlled accounts.
-- Keep live trading keys only in NZ operator-managed secret store/KMS.
-- Keep non-operator users as read-only.
-- Integrate real Polymarket transport in `src/lib/polymarket/client.ts` (`RealPolymarketClient`).
-  - Current `RealPolymarketClient` consumes official CLOB endpoints (`/simplified-markets`, `/book`).
+The full list is in [.env.example](/Users/tonylaughton/AI-Coding/QUANT/.env.example).
+
+The most important groups are:
+
+- Database and session: `DATABASE_URL`, `SESSION_COOKIE_NAME`, `SESSION_TTL_HOURS`
+- Login credentials: `OPERATOR_USERNAME`, `OPERATOR_PASSWORD`, `ANALYST_USERNAME`, `ANALYST_PASSWORD`
+- Bot safety: `KILL_SWITCH_SHARED_SECRET`, `LIVE_WALLET_KEY_REF`
+- Polymarket access: `POLYMARKET_FEED_MODE`, `POLYMARKET_API_KEY`, `POLYMARKET_API_SECRET`, `POLYMARKET_API_PASSPHRASE`, `POLYMARKET_PROFILE_KEY`
+
+## Useful commands
+
+```bash
+npm run dev
+npm run worker:dev
+npm test
+npm run build
+```
+
+## Project map
+
+- [src/app](/Users/tonylaughton/AI-Coding/QUANT/src/app): UI routes and API route handlers
+- [src/lib](/Users/tonylaughton/AI-Coding/QUANT/src/lib): auth, services, execution logic, feed client, risk controls
+- [worker/src/index.ts](/Users/tonylaughton/AI-Coding/QUANT/worker/src/index.ts): background worker loop
+- [prisma/schema.prisma](/Users/tonylaughton/AI-Coding/QUANT/prisma/schema.prisma): data model
+- [docs/HANDOVER.md](/Users/tonylaughton/AI-Coding/QUANT/docs/HANDOVER.md): architecture and current limitations
+- [docs/RUNBOOK.md](/Users/tonylaughton/AI-Coding/QUANT/docs/RUNBOOK.md): operational notes and troubleshooting
+
+## Good places to extend the project
+
+- Improve market classification and tagging quality
+- Improve liquidity and order book modelling
+- Separate paper-trading cadence from live-trading cadence
+- Add better telemetry around skipped trades, fills, and outcomes
+- Harden the live execution path and upstream API error handling
+
+## Contributing
+
+See [CONTRIBUTING.md](/Users/tonylaughton/AI-Coding/QUANT/CONTRIBUTING.md).
+
+Small cleanup PRs, bug fixes, and strategy experiments are all reasonable contributions.
+
+## License
+
+[MIT](/Users/tonylaughton/AI-Coding/QUANT/LICENSE)

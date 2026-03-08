@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest an improvement to the product, docs, or developer workflow
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What gap are you trying to address?
+      placeholder: The repo explains the current signal model, but not how to compare alternative models safely.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the improvement as concretely as you can.
+      placeholder: Add an offline evaluation script and a small benchmark dataset for signal experiments.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Tradeoffs
+      description: Costs, risks, or alternatives worth considering.
+      placeholder: This adds maintenance overhead but would make model changes easier to compare.
+  - type: textarea
+    id: scope
+    attributes:
+      label: Suggested scope
+      description: Keep this practical and reviewable.
+      placeholder: Start with docs and a simple evaluation harness before adding any new execution logic.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: This proposal does not require posting secrets, tokens, `.env` contents, or wallet references.
+          required: true

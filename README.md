@@ -108,6 +108,12 @@ See [CONTRIBUTING.md](/Users/tonylaughton/AI-Coding/QUANT/CONTRIBUTING.md).
 
 Small cleanup PRs, bug fixes, and strategy experiments are all reasonable contributions.
 
+## Security
+
+See [SECURITY.md](/Users/tonylaughton/AI-Coding/QUANT/SECURITY.md).
+
+Do not post secrets, `.env` contents, tokens, wallet references, or live credentials in issues or pull requests.
+
 ## License
 
 [MIT](/Users/tonylaughton/AI-Coding/QUANT/LICENSE)

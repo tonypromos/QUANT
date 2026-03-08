@@ -41,6 +41,7 @@ npm run build
 - Never commit real credentials, API keys, or wallet references
 - Keep `.env` local
 - Replace any example secrets with obvious placeholders
+- Read [SECURITY.md](/Users/tonylaughton/AI-Coding/QUANT/SECURITY.md) before reporting vulnerabilities
 
 ## If you are unsure
 

@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible problem in the app, worker, or docs
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please keep it concrete and do not include secrets, `.env` values, API keys, or wallet references.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+      placeholder: The worker stops creating opportunities after switching feed mode...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest reproducible sequence.
+      placeholder: |
+        1. Start the app and worker
+        2. Log in as operator
+        3. Change setting X
+        4. Observe Y
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: The worker should continue ranking opportunities.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: The dashboard shows no new opportunities and the worker logs cadence_guard forever.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Repo state, local env shape, mode, screenshots, logs, or related files.
+      placeholder: Branch, operating system, whether feed mode is mock or real, and any relevant log lines.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I did not include secrets, tokens, `.env` contents, or wallet references.
+          required: true
+        - label: I checked whether this is already explained in the README, runbook, or handover docs.
+          required: false
